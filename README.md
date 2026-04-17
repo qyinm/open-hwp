@@ -43,6 +43,15 @@ zig build
 ./zig-out/bin/openhwp workbench apply sample.hwpx sample.session.json --output sample.worked.hwpx
 ```
 
+## 테스트
+
+- 샘플 HWP 픽스처: `tests/fixtures/example.hwp`
+- 변환 테스트 실행:
+
+```bash
+zig test src/convert.zig
+```
+
 ## 사용자/Agent 직접 편집 흐름
 
 1. `workbench export`로 문서의 편집 가능한 텍스트 노드(`hp:run/hp:t`)를 JSON으로 추출합니다.
