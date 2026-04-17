@@ -4,6 +4,7 @@ const formats = @import("formats.zig");
 const hwp = @import("hwp.zig");
 const hwpx = @import("hwpx.zig");
 const workbench = @import("workbench.zig");
+const convert = @import("convert.zig");
 
 const AppError = error{
     InvalidArgument,
@@ -18,6 +19,7 @@ fn printUsage(writer: *std.Io.Writer) !void {
         \\  openhwp info <문서>
         \\  openhwp text <문서>
         \\  openhwp replace <문서> "<찾을문자열>" "<대체문자열>" --output <출력파일>
+        \\  openhwp convert <입력.hwp|hwpx> --output <출력.hwpx>
         \\  openhwp workbench export <문서.hwpx> --output <세션.json>
         \\  openhwp workbench apply <문서.hwpx> <세션.json> --output <출력.hwpx>
         \\
@@ -69,6 +71,10 @@ fn cmdWorkbenchApply(allocator: std.mem.Allocator, path: []const u8, session_jso
     try workbench.applySessionJson(allocator, path, session_json, output_hwpx);
 }
 
+fn cmdConvert(allocator: std.mem.Allocator, input_path: []const u8, output_hwpx: []const u8) !void {
+    try convert.convertToHwpx(allocator, input_path, output_hwpx);
+}
+
 fn runCli(allocator: std.mem.Allocator) !void {
     var stdout_file = std.fs.File.stdout();
     var stdout_buffer: [4096]u8 = undefined;
@@ -100,6 +106,14 @@ fn runCli(allocator: std.mem.Allocator) !void {
         if (!std.mem.eql(u8, args[5], "--output")) return AppError.InvalidArgument;
         try cmdReplace(allocator, args[2], args[3], args[4], args[6]);
         try stdout.interface.print("저장 완료: {s}\n", .{args[6]});
+        return;
+    }
+
+    if (std.mem.eql(u8, cmd, "convert")) {
+        if (args.len != 5) return AppError.InvalidArgument;
+        if (!std.mem.eql(u8, args[3], "--output")) return AppError.InvalidArgument;
+        try cmdConvert(allocator, args[2], args[4]);
+        try stdout.interface.print("변환 완료: {s}\n", .{args[4]});
         return;
     }
 
@@ -169,6 +183,18 @@ pub fn main() !void {
             },
             error.TextNodeCountMismatch => {
                 stderr_writer.interface.print("세션의 텍스트 노드 개수가 문서와 일치하지 않습니다.\n", .{}) catch {};
+            },
+            convert.ConvertError.ConverterNotFound => {
+                stderr_writer.interface.print(
+                    "HWP 변환기를 찾을 수 없습니다. OPENHWP_HWPX_CONVERTER를 설정하거나 hwpx-converter를 PATH에 추가하세요.\n",
+                    .{},
+                ) catch {};
+            },
+            convert.ConvertError.ConverterFailed => {
+                stderr_writer.interface.print(
+                    "HWP -> HWPX 변환기 실행에 실패했습니다. 변환기 설치/권한/입력파일을 확인하세요.\n",
+                    .{},
+                ) catch {};
             },
             else => {
                 stderr_writer.interface.print("실행 중 오류: {s}\n", .{@errorName(err)}) catch {};

@@ -13,6 +13,7 @@
 - `info <파일>`: 파일 형식 판별
 - `text <파일>`: 텍스트 추출
 - `replace <파일> "<찾을문자열>" "<대체문자열>" --output <출력.hwpx>`: 텍스트 치환
+- `convert <입력.hwp|hwpx> --output <출력.hwpx>`: HWPX 변환
 - `workbench export <문서.hwpx> --output <세션.json>`: 사용자/agent 편집용 세션 추출
 - `workbench apply <문서.hwpx> <세션.json> --output <출력.hwpx>`: 편집 세션 반영
 
@@ -23,6 +24,9 @@
 ## 제약
 
 - `hwp` 직접 편집은 지원하지 않습니다. 먼저 `hwpx`로 변환해야 합니다.
+- `.hwp -> .hwpx`는 내장 파서가 아니라 외부 변환기를 호출합니다.
+  - 기본 실행명: `hwpx-converter`
+  - 또는 환경변수 `OPENHWP_HWPX_CONVERTER=/절대/경로/변환기`
 - 텍스트 추출은 `hp:run/hp:t` 중심이므로 표/도형/수식의 완전한 의미 보존은 아직 보장하지 않습니다.
 - `unzip`, `zip`, `mktemp` 명령이 시스템에 있어야 합니다.
 
@@ -32,6 +36,7 @@
 zig build
 ./zig-out/bin/openhwp info sample.hwpx
 ./zig-out/bin/openhwp text sample.hwpx
+./zig-out/bin/openhwp convert sample.hwp --output sample.hwpx
 ./zig-out/bin/openhwp replace sample.hwpx "기존문자" "새문자" --output sample.fixed.hwpx
 ./zig-out/bin/openhwp workbench export sample.hwpx --output sample.session.json
 # sample.session.json 을 사용자/agent가 직접 수정
