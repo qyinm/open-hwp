@@ -10,3 +10,5 @@ interfaces/**/node_modules/
 interfaces/**/dist/
 interfaces/**/.next/
 interfaces/**/src-tauri/target/
+interfaces/**/src-tauri/gen/schemas/
+/package-lock.json
