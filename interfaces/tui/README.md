@@ -1,6 +1,6 @@
 # TUI Interface Workspace
 
-TUI는 GUI와 동일하게 `engine-interface-v1` 계약으로만 engine을 호출한다.
+TUI는 Desktop과 동일하게 `engine-interface-v1` 계약으로만 engine을 호출한다.
 
 ## 책임
 

@@ -3,13 +3,13 @@
 `OpenHWP`를 모노레포로 운영합니다.
 
 - `engine`: Zig 기반 문서 처리 코어
-- `interfaces`: GUI/TUI 같은 사용자 인터페이스 레이어
+- `interfaces`: Desktop/TUI 같은 사용자 인터페이스 레이어
 - `contracts`: engine-interface 간 안정 계약
 
 ## 구조
 
 - `engines/openhwp-zig`: 현재 동작하는 Zig engine
-- `interfaces/gui`: GUI 인터페이스 워크스페이스(스켈레톤)
+- `interfaces/desktop`: Tauri + React 기반 Desktop 인터페이스
 - `interfaces/tui`: TUI 인터페이스 워크스페이스(스켈레톤)
 - `contracts/engine-interface-v1.md`: engine 호출 계약
 
