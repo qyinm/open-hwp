@@ -1,0 +1,7 @@
+/.zig-cache/
+/.zig-global-cache/
+/.zig-local-cache/
+/zig-cache/
+/zig-out/
+/.tmp_smoke*/
+/*.exe
