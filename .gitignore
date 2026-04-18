@@ -10,12 +10,4 @@ interfaces/**/node_modules/
 interfaces/**/dist/
 interfaces/**/release/
 interfaces/**/.next/
-interfaces/**/src-tauri/target/
-interfaces/**/src-tauri/gen/schemas/
 /package-lock.json
-
-# Keep only canonical desktop app icons tracked
-interfaces/desktop/src-tauri/icons/*
-!interfaces/desktop/src-tauri/icons/icon.png
-!interfaces/desktop/src-tauri/icons/icon.icns
-!interfaces/desktop/src-tauri/icons/icon.ico

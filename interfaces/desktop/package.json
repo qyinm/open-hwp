@@ -51,14 +51,14 @@
     ],
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "src-tauri/icons/icon.icns",
+      "icon": "assets/icons/icon.icns",
       "identity": null
     },
     "win": {
-      "icon": "src-tauri/icons/icon.ico"
+      "icon": "assets/icons/icon.ico"
     },
     "linux": {
-      "icon": "src-tauri/icons/icon.png"
+      "icon": "assets/icons/icon.png"
     }
   }
 }
