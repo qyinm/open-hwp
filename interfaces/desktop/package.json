@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite --port 1420 --strictPort",
     "build": "tsc && vite build",
+    "build:engine": "cd ../../engines/openhwp-zig && zig build",
     "preview": "vite preview --port 1420 --strictPort",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:dev": "npm run build:engine && tauri dev",
+    "tauri:build": "npm run build:engine && tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
