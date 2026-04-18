@@ -1,6 +1,6 @@
 # Desktop Interface Workspace
 
-Desktop 인터페이스는 `Tauri + React`로 구성하며, 문서 처리는 전부 Zig engine에 위임한다.
+Desktop 인터페이스는 `Electron + React`로 구성하며, 문서 처리는 전부 Zig engine에 위임한다.
 
 ## 책임
 
@@ -18,5 +18,14 @@ Desktop 인터페이스는 `Tauri + React`로 구성하며, 문서 처리는 전
 ```bash
 cd /Users/hippoo/Desktop/01_projects/05_zero2one/openhwp/interfaces/desktop
 npm install
-npm run tauri:dev
+npm run dev
 ```
+
+## 배포 빌드
+
+```bash
+cd /Users/hippoo/Desktop/01_projects/05_zero2one/openhwp/interfaces/desktop
+npm run dist
+```
+
+Electron 패키징 결과물은 `interfaces/desktop/release/` 아래에 생성된다.

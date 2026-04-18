@@ -9,7 +9,7 @@
 ## 구조
 
 - `engines/openhwp-zig`: 현재 동작하는 Zig engine
-- `interfaces/desktop`: Tauri + React 기반 Desktop 인터페이스
+- `interfaces/desktop`: Electron + React 기반 Desktop 인터페이스
 - `interfaces/tui`: TUI 인터페이스 워크스페이스(스켈레톤)
 - `contracts/engine-interface-v1.md`: engine 호출 계약
 

@@ -8,6 +8,7 @@
 
 interfaces/**/node_modules/
 interfaces/**/dist/
+interfaces/**/release/
 interfaces/**/.next/
 interfaces/**/src-tauri/target/
 interfaces/**/src-tauri/gen/schemas/

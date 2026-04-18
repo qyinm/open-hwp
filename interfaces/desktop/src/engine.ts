@@ -1,5 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
-
 export type EngineStatus = {
   enginePath: string;
   engineAvailable: boolean;
@@ -8,40 +6,60 @@ export type EngineStatus = {
   converterAvailable: boolean;
 };
 
+export interface OpenHwpDesktopApi {
+  getEngineStatus(): Promise<EngineStatus>;
+  pickDocumentPath(): Promise<string | null>;
+  pickOutputHwpxPath(currentDoc?: string | null): Promise<string | null>;
+  pickSessionJsonPath(currentDoc?: string | null): Promise<string | null>;
+  engineInfo(path: string): Promise<string>;
+  engineText(path: string): Promise<string>;
+  engineConvert(input: string, output: string): Promise<string>;
+  engineWorkbenchExport(input: string, outputJson: string): Promise<string>;
+  engineWorkbenchApply(
+    input: string,
+    sessionJson: string,
+    output: string
+  ): Promise<string>;
+}
+
+function api(): OpenHwpDesktopApi {
+  if (typeof window === "undefined" || !window.openhwp) {
+    throw new Error("Electron preload bridge is unavailable. Start the desktop app with `npm run dev`.");
+  }
+
+  return window.openhwp;
+}
+
 export async function getEngineStatus(): Promise<EngineStatus> {
-  return invoke<EngineStatus>("get_engine_status");
+  return api().getEngineStatus();
 }
 
 export async function pickDocumentPath(): Promise<string | null> {
-  return invoke<string | null>("pick_document_path");
+  return api().pickDocumentPath();
 }
 
 export async function pickOutputHwpxPath(currentDoc?: string): Promise<string | null> {
-  return invoke<string | null>("pick_output_hwpx_path", {
-    currentDoc: currentDoc ?? null,
-  });
+  return api().pickOutputHwpxPath(currentDoc ?? null);
 }
 
 export async function pickSessionJsonPath(currentDoc?: string): Promise<string | null> {
-  return invoke<string | null>("pick_session_json_path", {
-    currentDoc: currentDoc ?? null,
-  });
+  return api().pickSessionJsonPath(currentDoc ?? null);
 }
 
 export async function engineInfo(path: string): Promise<string> {
-  return invoke<string>("engine_info", { path });
+  return api().engineInfo(path);
 }
 
 export async function engineText(path: string): Promise<string> {
-  return invoke<string>("engine_text", { path });
+  return api().engineText(path);
 }
 
 export async function engineConvert(input: string, output: string): Promise<string> {
-  return invoke<string>("engine_convert", { input, output });
+  return api().engineConvert(input, output);
 }
 
 export async function engineWorkbenchExport(input: string, outputJson: string): Promise<string> {
-  return invoke<string>("engine_workbench_export", { input, outputJson });
+  return api().engineWorkbenchExport(input, outputJson);
 }
 
 export async function engineWorkbenchApply(
@@ -49,5 +67,5 @@ export async function engineWorkbenchApply(
   sessionJson: string,
   output: string
 ): Promise<string> {
-  return invoke<string>("engine_workbench_apply", { input, sessionJson, output });
+  return api().engineWorkbenchApply(input, sessionJson, output);
 }
