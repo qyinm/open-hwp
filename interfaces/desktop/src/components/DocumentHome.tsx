@@ -27,8 +27,8 @@ export function DocumentHome({
     : engineStatus.engineAvailable
       ? engineStatus.converterAvailable
         ? "HWPX 편집과 HWP 가져오기를 모두 사용할 수 있습니다."
-        : "HWPX 편집은 가능하며, HWP 가져오기는 변환기 연결이 필요합니다."
-      : "엔진을 찾지 못했습니다. 데스크톱 빌드 구성을 확인해야 합니다.";
+        : "HWPX 편집은 가능하지만 HWP 가져오기는 변환기 연결이 필요합니다."
+      : "엔진을 찾지 못했습니다. 데스크톱 빌드 구성을 확인하세요.";
 
   return (
     <main className="home-shell">
@@ -37,12 +37,12 @@ export function DocumentHome({
           <p className="eyebrow">OpenHWP Desktop</p>
           <h1>문서를 열고 바로 편집하는 워크플로우</h1>
           <p className="hero-copy">
-            변환, 세션 JSON, apply 단계를 화면에서 지우고 문서 자체를 중심에 둡니다.
+            변환/내보내기 과정을 내부로 숨기고 문서 자체를 중심에 둡니다.
           </p>
         </div>
         <div className="hero-actions">
           <button className="primary-button" onClick={onOpen} disabled={busy}>
-            {busy ? "Opening..." : "Open Document"}
+            {busy ? "열기 중..." : "문서 열기"}
           </button>
           <p className="muted-note">지원 형식: `.hwpx` 직접 편집, `.hwp` 가져오기 후 `.hwpx`로 저장</p>
         </div>
@@ -52,7 +52,7 @@ export function DocumentHome({
         <article className="surface stack-gap-lg">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Recent</p>
+              <p className="eyebrow">최근 파일</p>
               <h2>최근 문서</h2>
             </div>
           </div>
@@ -79,31 +79,31 @@ export function DocumentHome({
 
         <article className="surface stack-gap-md">
           <div>
-            <p className="eyebrow">Runtime</p>
+            <p className="eyebrow">런타임</p>
             <h2>편집 준비 상태</h2>
           </div>
           <p className="status-copy">{statusText}</p>
           <dl className="status-list">
             <div>
-              <dt>Engine</dt>
-              <dd>{engineStatus?.engineAvailable ? "Ready" : "Missing"}</dd>
+              <dt>엔진</dt>
+              <dd>{engineStatus?.engineAvailable ? "사용 가능" : "누락"}</dd>
             </div>
             <div>
-              <dt>HWP Import</dt>
-              <dd>{engineStatus?.converterAvailable ? "Ready" : "Needs converter"}</dd>
+              <dt>HWP 가져오기</dt>
+              <dd>{engineStatus?.converterAvailable ? "사용 가능" : "변환기 필요"}</dd>
             </div>
           </dl>
           <details className="details-panel">
-            <summary>Diagnostics</summary>
+            <summary>진단</summary>
             <div className="details-panel__body">
               <p>
-                <strong>Engine Path</strong>
+                <strong>엔진 경로</strong>
               </p>
               <code className="path-code">{engineStatus?.enginePath ?? "-"}</code>
               <p>
-                <strong>Converter Path</strong>
+                <strong>변환기 경로</strong>
               </p>
-              <code className="path-code">{engineStatus?.converterPath ?? "Not configured"}</code>
+              <code className="path-code">{engineStatus?.converterPath ?? "설정되지 않음"}</code>
             </div>
           </details>
         </article>

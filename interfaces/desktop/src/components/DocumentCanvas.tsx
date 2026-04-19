@@ -10,7 +10,7 @@ export function DocumentCanvas({ section, onNodeChange }: DocumentCanvasProps) {
     return (
       <section className="document-stage surface">
         <div className="document-paper empty-paper">
-          <p>표시할 섹션이 없습니다.</p>
+          <p>표시할 구간이 없습니다.</p>
         </div>
       </section>
     );
@@ -19,21 +19,17 @@ export function DocumentCanvas({ section, onNodeChange }: DocumentCanvasProps) {
   return (
     <section className="document-stage surface">
       <div className="document-paper">
-        <header className="paper-header">
-          <p className="eyebrow">{section.path}</p>
-          <h2>{section.title}</h2>
-        </header>
         <div className="paper-content">
           {section.nodes.map((node) => (
-            <label key={node.id} className="node-block">
-              <span className="node-label">Paragraph {node.nodeIndex + 1}</span>
-              <textarea
-                className="node-editor"
-                value={node.text}
-                onChange={(event) => onNodeChange(node.nodeIndex, event.target.value)}
-                spellCheck={false}
-              />
-            </label>
+            <textarea
+              key={node.id}
+              className="node-editor"
+              value={node.text}
+              onChange={(event) => onNodeChange(node.nodeIndex, event.target.value)}
+              spellCheck={false}
+              aria-label={`문서 내용 ${node.nodeIndex + 1}`}
+              placeholder="텍스트를 입력하세요."
+            />
           ))}
         </div>
       </div>

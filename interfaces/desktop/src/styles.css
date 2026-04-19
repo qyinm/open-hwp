@@ -1,5 +1,5 @@
 :root {
-  font-family: "IBM Plex Sans", "Pretendard", "Noto Sans KR", sans-serif;
+  font-family: "Pretendard", "Noto Sans KR", "IBM Plex Sans", sans-serif;
   color: #111111;
   background: #ffffff;
   color-scheme: light;
@@ -60,12 +60,10 @@ button {
 .muted-note,
 .status-copy,
 .empty-state,
-.toolbar-meta,
 .selection-meta,
 .recent-card__time,
 .sidebar-item__meta,
-.sidebar-item__preview,
-.node-label {
+.sidebar-item__preview {
   color: var(--text-muted);
 }
 
@@ -128,7 +126,6 @@ button {
 
 .home-hero h1,
 .editor-toolbar h1,
-.paper-header h2,
 .section-heading h2,
 .selection-card h3 {
   margin: 0;
@@ -276,12 +273,6 @@ button {
   padding: 0 16px 16px;
 }
 
-.details-panel__body--activity p {
-  margin: 0;
-  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
-  font-size: 12px;
-}
-
 .editor-shell {
   display: grid;
   gap: 16px;
@@ -360,39 +351,29 @@ button {
   color: var(--text-muted);
 }
 
-.paper-header {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 24px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
-}
-
 .paper-content {
-  display: grid;
-  gap: 20px;
-}
-
-.node-block {
   display: grid;
   gap: 8px;
 }
 
 .node-editor {
   width: 100%;
-  min-height: 120px;
-  padding: 0;
+  min-height: 36px;
+  padding: 8px 6px 6px;
   border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
   outline: 0;
   resize: vertical;
   background: transparent;
+  line-height: 1.7;
   color: var(--text);
   font-size: 16px;
-  line-height: 1.75;
+  transition: border-color 120ms ease;
 }
 
 .node-editor:focus {
-  background: #fafafa;
+  border-bottom-color: #111111;
 }
 
 .selection-card {

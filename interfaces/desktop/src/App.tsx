@@ -43,11 +43,14 @@ function buildEditorSections(session: WorkbenchSession): EditorSectionView[] {
       section.nodes
         .map((node) => node.text.trim())
         .find((text) => text.length > 0)
-        ?.slice(0, 88) ?? "빈 섹션";
+        ?.slice(0, 88) ?? "내용 없음";
+    const title = section.path.trim() || `섹션 ${sectionIndex + 1}`;
+    const normalizedTitle = title.split(/[\\/]/).filter(Boolean).pop() ?? title;
+    const trimmedTitle = normalizedTitle.length > 0 ? normalizedTitle : `섹션 ${sectionIndex + 1}`;
 
     return {
       id: `${sectionIndex}:${section.path}`,
-      title: `Section ${sectionIndex + 1}`,
+      title: trimmedTitle,
       path: section.path,
       nodeCount: section.nodes.length,
       preview,
@@ -66,11 +69,6 @@ export function App() {
   const [documentState, setDocumentState] = useState<DocumentWorkspace | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [busy, setBusy] = useState<BusyAction>(null);
-  const [activity, setActivity] = useState<string[]>([]);
-
-  const appendActivity = (line: string) => {
-    setActivity((prev) => [line, ...prev].slice(0, 20));
-  };
 
   const refreshHomeData = async () => {
     const [status, recent] = await Promise.all([getEngineStatus(), getRecentDocuments()]);
@@ -137,7 +135,7 @@ export function App() {
     try {
       await task();
     } catch (error) {
-      appendActivity(`ERROR: ${String(error)}`);
+      console.error("문서 작업 실패:", error);
     } finally {
       setBusy(null);
     }
@@ -150,7 +148,6 @@ export function App() {
 
     setDocumentState(nextDocument);
     setSelectedSectionId(buildEditorSections(nextDocument.session)[0]?.id ?? null);
-    appendActivity(`OPENED: ${nextDocument.sourcePath}`);
     await refreshHomeData();
   };
 
@@ -187,12 +184,10 @@ export function App() {
         ? await saveDocument(documentState)
         : await saveDocumentAs(documentState);
       if (!result) {
-        appendActivity("SAVE AS: cancelled");
         return;
       }
 
       setDocumentState(result);
-      appendActivity(`SAVED: ${result.saveTargetPath}`);
       await refreshHomeData();
     });
   };
@@ -205,12 +200,10 @@ export function App() {
     await withBusy("save-as", async () => {
       const result = await saveDocumentAs(documentState);
       if (!result) {
-        appendActivity("SAVE AS: cancelled");
         return;
       }
 
       setDocumentState(result);
-      appendActivity(`SAVE AS: ${result.saveTargetPath}`);
       await refreshHomeData();
     });
   };
@@ -273,8 +266,6 @@ export function App() {
       document={documentState}
       sections={sections}
       selectedSectionId={selectedSectionId}
-      engineStatus={engineStatus}
-      activity={activity}
       onOpen={() => void handleOpen()}
       onSave={() => void handleSave()}
       onSaveAs={() => void handleSaveAs()}

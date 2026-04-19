@@ -15,8 +15,8 @@ export function SectionSidebar({
     <aside className="editor-sidebar surface">
       <div className="section-heading compact-heading">
         <div>
-          <p className="eyebrow">Sections</p>
-          <h2>문서 구조</h2>
+          <p className="eyebrow">문서 개요</p>
+          <h2>문서 개요</h2>
         </div>
       </div>
       <div className="sidebar-list">
@@ -27,7 +27,7 @@ export function SectionSidebar({
             onClick={() => onSelectSection(section.id)}
           >
             <span className="sidebar-item__title">{section.title}</span>
-            <span className="sidebar-item__meta">{section.nodeCount} nodes</span>
+            <span className="sidebar-item__meta">{section.nodeCount}개 항목</span>
             <span className="sidebar-item__preview">{section.preview}</span>
           </button>
         ))}

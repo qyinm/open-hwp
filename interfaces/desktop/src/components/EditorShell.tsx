@@ -1,4 +1,4 @@
-import type { DocumentWorkspace, EditorSectionView, EngineStatus } from "../types/document";
+import type { DocumentWorkspace, EditorSectionView } from "../types/document";
 import { DocumentCanvas } from "./DocumentCanvas";
 import { ImportBanner } from "./ImportBanner";
 import { InspectorPanel } from "./InspectorPanel";
@@ -10,8 +10,6 @@ type EditorShellProps = {
   document: DocumentWorkspace;
   sections: EditorSectionView[];
   selectedSectionId: string | null;
-  engineStatus: EngineStatus | null;
-  activity: string[];
   onOpen: () => void;
   onSave: () => void;
   onSaveAs: () => void;
@@ -21,7 +19,7 @@ type EditorShellProps = {
 
 function fileName(pathValue: string | null) {
   if (!pathValue) {
-    return "Untitled";
+    return "제목 없음";
   }
 
   const parts = pathValue.split(/[\\/]/);
@@ -33,8 +31,6 @@ export function EditorShell({
   document,
   sections,
   selectedSectionId,
-  engineStatus,
-  activity,
   onOpen,
   onSave,
   onSaveAs,
@@ -42,6 +38,7 @@ export function EditorShell({
   onNodeChange
 }: EditorShellProps) {
   const selectedSection = sections.find((section) => section.id === selectedSectionId) ?? sections[0] ?? null;
+  const saveButtonLabel = document.saveTargetPath ? "저장" : "저장 (새 파일로)";
 
   return (
     <main className="editor-shell">
@@ -52,17 +49,16 @@ export function EditorShell({
             {fileName(document.saveTargetPath ?? document.sourcePath)}
             {document.dirty ? " *" : ""}
           </h1>
-          <p className="toolbar-meta">문서 중심 편집 워크플로우</p>
         </div>
         <div className="toolbar-actions">
           <button className="secondary-button" onClick={onOpen} disabled={busy}>
-            Open
+            문서 열기
           </button>
           <button className="primary-button" onClick={onSave} disabled={busy}>
-            {busy ? "Saving..." : "Save"}
+            {busy ? "저장 중..." : saveButtonLabel}
           </button>
           <button className="secondary-button" onClick={onSaveAs} disabled={busy}>
-            Save As
+            다른 이름으로 저장
           </button>
         </div>
       </header>
@@ -88,8 +84,6 @@ export function EditorShell({
         <InspectorPanel
           document={document}
           selectedSection={selectedSection}
-          engineStatus={engineStatus}
-          activity={activity}
         />
       </div>
 

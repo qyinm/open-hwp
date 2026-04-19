@@ -6,7 +6,7 @@ type StatusBarProps = {
 
 function formatSavedAt(value: string | null) {
   if (!value) {
-    return "Not saved yet";
+    return "아직 저장 안됨";
   }
 
   return new Date(value).toLocaleTimeString("ko-KR", {
@@ -18,9 +18,9 @@ function formatSavedAt(value: string | null) {
 export function StatusBar({ document }: StatusBarProps) {
   return (
     <footer className="status-bar surface">
-      <span>{document.importedFromLegacyHwp ? "Imported from HWP" : "Native HWPX"}</span>
-      <span>{document.dirty ? "Unsaved changes" : "Saved"}</span>
-      <span>{document.session.sections.length} sections</span>
+      <span>{document.importedFromLegacyHwp ? "HWP 가져옴" : "HWPX 편집본"}</span>
+      <span>{document.dirty ? "저장되지 않음" : "저장됨"}</span>
+      <span>{document.session.sections.length}개 섹션</span>
       <span>{formatSavedAt(document.lastSavedAt)}</span>
     </footer>
   );
