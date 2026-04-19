@@ -5,6 +5,7 @@ const path = require("node:path");
 
 const DEV_RENDERER_URL = "http://127.0.0.1:1420";
 const ENGINE_BIN_NAME = process.platform === "win32" ? "openhwp.exe" : "openhwp";
+const RECENT_DOCUMENT_LIMIT = 10;
 
 function fileExists(targetPath) {
   if (!targetPath) {
@@ -16,6 +17,11 @@ function fileExists(targetPath) {
   } catch {
     return false;
   }
+}
+
+function ensureDir(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true });
+  return dirPath;
 }
 
 function isDevLaunch() {
@@ -135,13 +141,94 @@ function runEngine(args) {
   });
 }
 
-function suggestedFilePath(currentDoc, fallbackName, nextExtension) {
-  if (!currentDoc) {
-    return fallbackName;
+function documentWorkspaceRoot() {
+  return ensureDir(path.join(app.getPath("userData"), "document-workspaces"));
+}
+
+function createWorkspaceDir() {
+  return fs.mkdtempSync(path.join(documentWorkspaceRoot(), "doc-"));
+}
+
+function recentDocumentsPath() {
+  return path.join(app.getPath("userData"), "recent-documents.json");
+}
+
+function sourceFormatFor(targetPath) {
+  const extension = path.extname(targetPath).toLowerCase();
+  if (extension === ".hwp" || extension === ".hwpx") {
+    return extension.slice(1);
   }
 
-  const parsed = path.parse(currentDoc);
-  return path.join(parsed.dir, `${parsed.name}${nextExtension}`);
+  throw new Error("지원하지 않는 문서 형식입니다. .hwp 또는 .hwpx 파일만 열 수 있습니다.");
+}
+
+function defaultSavePath(documentState) {
+  const basePath = documentState.saveTargetPath ?? documentState.sourcePath;
+  const parsed = path.parse(basePath);
+  return path.join(parsed.dir, `${parsed.name}.hwpx`);
+}
+
+function normalizeHwpxTargetPath(targetPath) {
+  const absolute = path.resolve(targetPath);
+  if (path.extname(absolute).toLowerCase() === ".hwpx") {
+    return absolute;
+  }
+
+  const parsed = path.parse(absolute);
+  return path.join(parsed.dir, `${parsed.name}.hwpx`);
+}
+
+function readJsonFile(filePath, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonFile(filePath, value) {
+  ensureDir(path.dirname(filePath));
+  fs.writeFileSync(filePath, JSON.stringify(value, null, 2));
+}
+
+function readRecentDocuments() {
+  const raw = readJsonFile(recentDocumentsPath(), []);
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .filter((entry) => entry && typeof entry.path === "string" && fileExists(entry.path))
+    .map((entry) => {
+      const documentPath = path.resolve(entry.path);
+      return {
+        path: documentPath,
+        label: typeof entry.label === "string" && entry.label ? entry.label : path.basename(documentPath),
+        lastOpenedAt:
+          typeof entry.lastOpenedAt === "string" && entry.lastOpenedAt
+            ? entry.lastOpenedAt
+            : new Date().toISOString(),
+        sourceFormat: sourceFormatFor(documentPath)
+      };
+    })
+    .slice(0, RECENT_DOCUMENT_LIMIT);
+}
+
+function pushRecentDocument(filePath) {
+  const absolutePath = path.resolve(filePath);
+  if (!fileExists(absolutePath)) {
+    return;
+  }
+
+  const nextEntry = {
+    path: absolutePath,
+    label: path.basename(absolutePath),
+    lastOpenedAt: new Date().toISOString(),
+    sourceFormat: sourceFormatFor(absolutePath)
+  };
+
+  const deduped = readRecentDocuments().filter((entry) => path.resolve(entry.path) !== absolutePath);
+  writeJsonFile(recentDocumentsPath(), [nextEntry, ...deduped].slice(0, RECENT_DOCUMENT_LIMIT));
 }
 
 async function pickDocumentPath() {
@@ -162,9 +249,9 @@ async function pickDocumentPath() {
   return result.filePaths[0] ?? null;
 }
 
-async function pickOutputHwpxPath(currentDoc) {
+async function pickSaveTargetPath(documentState) {
   const result = await dialog.showSaveDialog({
-    defaultPath: suggestedFilePath(currentDoc, "output.hwpx", ".converted.hwpx"),
+    defaultPath: defaultSavePath(documentState),
     filters: [
       {
         name: "HWPX Document",
@@ -173,31 +260,147 @@ async function pickOutputHwpxPath(currentDoc) {
     ]
   });
 
-  return result.canceled ? null : (result.filePath ?? null);
+  if (result.canceled || !result.filePath) {
+    return null;
+  }
+
+  return normalizeHwpxTargetPath(result.filePath);
 }
 
-async function pickSessionJsonPath(currentDoc) {
-  const result = await dialog.showSaveDialog({
-    defaultPath: suggestedFilePath(currentDoc, "session.json", ".session.json"),
-    filters: [
-      {
-        name: "JSON",
-        extensions: ["json"]
-      }
-    ]
-  });
+async function exportWorkbenchSession(workingHwpxPath, workspaceDir) {
+  const sessionJsonPath = path.join(workspaceDir, "session.json");
+  await runEngine(["workbench", "export", workingHwpxPath, "--output", sessionJsonPath]);
+  return readJsonFile(sessionJsonPath, null);
+}
 
-  return result.canceled ? null : (result.filePath ?? null);
+function validateDocumentState(documentState) {
+  if (!documentState || typeof documentState !== "object") {
+    throw new Error("문서 상태가 올바르지 않습니다.");
+  }
+
+  if (typeof documentState.workingDirectory !== "string" || !documentState.workingDirectory) {
+    throw new Error("문서 작업 디렉터리를 찾지 못했습니다.");
+  }
+
+  if (typeof documentState.workingHwpxPath !== "string" || !documentState.workingHwpxPath) {
+    throw new Error("문서 작업 파일 경로가 비어 있습니다.");
+  }
+
+  if (!documentState.session) {
+    throw new Error("문서 편집 세션이 비어 있습니다.");
+  }
+}
+
+async function openDocumentPath(filePath) {
+  const absolutePath = path.resolve(filePath);
+  if (!fileExists(absolutePath)) {
+    throw new Error("문서를 찾지 못했습니다.");
+  }
+
+  const sourceFormat = sourceFormatFor(absolutePath);
+  const workspaceDir = createWorkspaceDir();
+
+  let workingHwpxPath = absolutePath;
+  let openMode = "direct-hwpx";
+  let saveTargetPath = absolutePath;
+  let importedFromLegacyHwp = false;
+
+  if (sourceFormat === "hwp") {
+    workingHwpxPath = path.join(workspaceDir, `${path.parse(absolutePath).name}.imported.hwpx`);
+    await runEngine(["convert", absolutePath, "--output", workingHwpxPath]);
+    openMode = "imported-hwp";
+    saveTargetPath = null;
+    importedFromLegacyHwp = true;
+  }
+
+  const session = await exportWorkbenchSession(workingHwpxPath, workspaceDir);
+  if (!session) {
+    throw new Error("문서 편집 세션을 불러오지 못했습니다.");
+  }
+
+  pushRecentDocument(absolutePath);
+
+  return {
+    sourcePath: absolutePath,
+    sourceFormat,
+    openMode,
+    workingDirectory: workspaceDir,
+    workingHwpxPath,
+    saveTargetPath,
+    importedFromLegacyHwp,
+    session,
+    dirty: false,
+    lastSavedAt: null
+  };
+}
+
+async function openDocumentWithDialog() {
+  const selectedPath = await pickDocumentPath();
+  if (!selectedPath) {
+    return null;
+  }
+
+  return openDocumentPath(selectedPath);
+}
+
+async function writeDocumentToTarget(documentState, targetPath) {
+  validateDocumentState(documentState);
+
+  const workspaceDir = ensureDir(documentState.workingDirectory);
+  const absoluteTarget = normalizeHwpxTargetPath(targetPath);
+  const sessionJsonPath = path.join(workspaceDir, "pending-session.json");
+  const tempOutputPath = path.join(workspaceDir, `saved-${Date.now()}.hwpx`);
+
+  writeJsonFile(sessionJsonPath, documentState.session);
+  await runEngine([
+    "workbench",
+    "apply",
+    documentState.workingHwpxPath,
+    sessionJsonPath,
+    "--output",
+    tempOutputPath
+  ]);
+
+  ensureDir(path.dirname(absoluteTarget));
+  fs.copyFileSync(tempOutputPath, absoluteTarget);
+  fs.unlinkSync(tempOutputPath);
+
+  pushRecentDocument(absoluteTarget);
+
+  return {
+    ...documentState,
+    saveTargetPath: absoluteTarget,
+    dirty: false,
+    lastSavedAt: new Date().toISOString()
+  };
+}
+
+async function saveDocument(documentState) {
+  if (!documentState.saveTargetPath) {
+    throw new Error("가져온 HWP 문서는 HWPX로 저장해야 합니다. Save As를 사용하세요.");
+  }
+
+  return writeDocumentToTarget(documentState, documentState.saveTargetPath);
+}
+
+async function saveDocumentAs(documentState) {
+  const targetPath = await pickSaveTargetPath(documentState);
+  if (!targetPath) {
+    return null;
+  }
+
+  return writeDocumentToTarget(documentState, targetPath);
 }
 
 function createMainWindow() {
   const mainWindow = new BrowserWindow({
-    width: 1280,
+    width: 1440,
     height: 960,
-    minWidth: 960,
+    minWidth: 1080,
     minHeight: 720,
     show: false,
     title: "OpenHWP Desktop",
+    backgroundColor: "#ffffff",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -220,31 +423,11 @@ function createMainWindow() {
 
 function registerIpcHandlers() {
   ipcMain.handle("engine:getStatus", () => currentEngineStatus());
-  ipcMain.handle("dialog:pickDocumentPath", () => pickDocumentPath());
-  ipcMain.handle("dialog:pickOutputHwpxPath", (_event, currentDoc) =>
-    pickOutputHwpxPath(currentDoc ?? null)
-  );
-  ipcMain.handle("dialog:pickSessionJsonPath", (_event, currentDoc) =>
-    pickSessionJsonPath(currentDoc ?? null)
-  );
-  ipcMain.handle("engine:info", (_event, inputPath) => runEngine(["info", inputPath]));
-  ipcMain.handle("engine:text", (_event, inputPath) => runEngine(["text", inputPath]));
-  ipcMain.handle("engine:convert", (_event, inputPath, outputPath) =>
-    runEngine(["convert", inputPath, "--output", outputPath])
-  );
-  ipcMain.handle("engine:workbenchExport", (_event, inputPath, outputJsonPath) =>
-    runEngine(["workbench", "export", inputPath, "--output", outputJsonPath])
-  );
-  ipcMain.handle("engine:workbenchApply", (_event, inputPath, sessionJsonPath, outputPath) =>
-    runEngine([
-      "workbench",
-      "apply",
-      inputPath,
-      sessionJsonPath,
-      "--output",
-      outputPath
-    ])
-  );
+  ipcMain.handle("document:open", () => openDocumentWithDialog());
+  ipcMain.handle("document:openPath", (_event, filePath) => openDocumentPath(filePath));
+  ipcMain.handle("document:getRecent", () => readRecentDocuments());
+  ipcMain.handle("document:save", (_event, documentState) => saveDocument(documentState));
+  ipcMain.handle("document:saveAs", (_event, documentState) => saveDocumentAs(documentState));
 }
 
 app.whenReady().then(() => {

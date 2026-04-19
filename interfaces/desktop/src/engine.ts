@@ -1,25 +1,16 @@
-export type EngineStatus = {
-  enginePath: string;
-  engineAvailable: boolean;
-  usingBundledEngine: boolean;
-  converterPath: string | null;
-  converterAvailable: boolean;
-};
+import type {
+  DocumentWorkspace,
+  EngineStatus,
+  RecentDocument
+} from "./types/document";
 
 export interface OpenHwpDesktopApi {
   getEngineStatus(): Promise<EngineStatus>;
-  pickDocumentPath(): Promise<string | null>;
-  pickOutputHwpxPath(currentDoc?: string | null): Promise<string | null>;
-  pickSessionJsonPath(currentDoc?: string | null): Promise<string | null>;
-  engineInfo(path: string): Promise<string>;
-  engineText(path: string): Promise<string>;
-  engineConvert(input: string, output: string): Promise<string>;
-  engineWorkbenchExport(input: string, outputJson: string): Promise<string>;
-  engineWorkbenchApply(
-    input: string,
-    sessionJson: string,
-    output: string
-  ): Promise<string>;
+  openDocument(): Promise<DocumentWorkspace | null>;
+  openDocumentPath(path: string): Promise<DocumentWorkspace>;
+  getRecentDocuments(): Promise<RecentDocument[]>;
+  saveDocument(document: DocumentWorkspace): Promise<DocumentWorkspace>;
+  saveDocumentAs(document: DocumentWorkspace): Promise<DocumentWorkspace | null>;
 }
 
 function api(): OpenHwpDesktopApi {
@@ -34,38 +25,24 @@ export async function getEngineStatus(): Promise<EngineStatus> {
   return api().getEngineStatus();
 }
 
-export async function pickDocumentPath(): Promise<string | null> {
-  return api().pickDocumentPath();
+export async function openDocument(): Promise<DocumentWorkspace | null> {
+  return api().openDocument();
 }
 
-export async function pickOutputHwpxPath(currentDoc?: string): Promise<string | null> {
-  return api().pickOutputHwpxPath(currentDoc ?? null);
+export async function openDocumentPath(path: string): Promise<DocumentWorkspace> {
+  return api().openDocumentPath(path);
 }
 
-export async function pickSessionJsonPath(currentDoc?: string): Promise<string | null> {
-  return api().pickSessionJsonPath(currentDoc ?? null);
+export async function getRecentDocuments(): Promise<RecentDocument[]> {
+  return api().getRecentDocuments();
 }
 
-export async function engineInfo(path: string): Promise<string> {
-  return api().engineInfo(path);
+export async function saveDocument(document: DocumentWorkspace): Promise<DocumentWorkspace> {
+  return api().saveDocument(document);
 }
 
-export async function engineText(path: string): Promise<string> {
-  return api().engineText(path);
-}
-
-export async function engineConvert(input: string, output: string): Promise<string> {
-  return api().engineConvert(input, output);
-}
-
-export async function engineWorkbenchExport(input: string, outputJson: string): Promise<string> {
-  return api().engineWorkbenchExport(input, outputJson);
-}
-
-export async function engineWorkbenchApply(
-  input: string,
-  sessionJson: string,
-  output: string
-): Promise<string> {
-  return api().engineWorkbenchApply(input, sessionJson, output);
+export async function saveDocumentAs(
+  document: DocumentWorkspace
+): Promise<DocumentWorkspace | null> {
+  return api().saveDocumentAs(document);
 }
